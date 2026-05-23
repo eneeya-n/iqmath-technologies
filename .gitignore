@@ -1,0 +1,22 @@
+node_modules
+.next
+dist
+build
+.env
+.env.local
+coverage
+*.log
+frontend/.next
+frontend/out
+frontend/.netlify
+frontend/frontend/
+backend/dist
+backend/node_modules
+frontend/node_modules
+prisma/migrations
+.DS_Store
+
+# Local-only root assets (not needed for deploy)
+WhatsApp*.jpeg
+harry_potter/
+iqmath_images/

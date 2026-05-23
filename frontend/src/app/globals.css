@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 222 47% 8%;
+  --foreground: 210 40% 98%;
+  --card: 222 40% 12%;
+  --border: 217 33% 24%;
+  --input: 217 33% 24%;
+  --ring: 191 91% 55%;
+}
+
+html,
+body {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: radial-gradient(circle at top, #0f172a 0%, #020617 45%, #020617 100%);
+  color: hsl(var(--foreground));
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.hero-globe {
+  position: relative;
+  overflow: hidden;
+}

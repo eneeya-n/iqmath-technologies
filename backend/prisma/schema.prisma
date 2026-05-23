@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STUDENT
+  MENTOR
+  CORPORATE_CLIENT
+  COLLEGE_ADMIN
+}
+
+model User {
+  id               String              @id @default(cuid())
+  email            String              @unique
+  name             String
+  passwordHash     String?
+  role             UserRole            @default(STUDENT)
+  googleId         String?             @unique
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  studentProfile   Student?
+  mentorProfile    Mentor?
+  examSessions     ExamSession[]
+  submissions      CodingSubmission[]
+  trainingPrograms TrainingProgram[]
+}
+
+model Student {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  country     String
+  institution String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Mentor {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  expertise  String
+  bio        String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  lessons     Lesson[]
+  assignments Assignment[]
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  courseId  String
+  createdAt DateTime @default(now())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Assignment {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  dueDate     DateTime?
+  courseId    String
+  createdAt   DateTime @default(now())
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  isLive      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model CorporateClient {
+  id          String   @id @default(cuid())
+  name        String
+  country     String
+  contactName String?
+  contactEmail String?
+  createdAt   DateTime @default(now())
+}
+
+model College {
+  id        String   @id @default(cuid())
+  name      String
+  country   String
+  city      String?
+  createdAt DateTime @default(now())
+}
+
+model Certificate {
+  id          String   @id @default(cuid())
+  title       String
+  issuedTo    String
+  programName String
+  issuedAt    DateTime
+  createdAt   DateTime @default(now())
+}
+
+model CountryUsage {
+  id           String   @id @default(cuid())
+  country      String   @unique
+  activeUsers  Int      @default(0)
+  activeCourses Int     @default(0)
+  revenueINR   Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+model TrainingProgram {
+  id          String   @id @default(cuid())
+  title       String
+  type        String
+  country     String
+  participants Int
+  ownerId     String?
+  createdAt   DateTime @default(now())
+  owner       User?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+}
+
+model ExamSession {
+  id                String   @id @default(cuid())
+  userId            String
+  examName          String
+  suspiciousScore   Int      @default(0)
+  tabSwitchCount    Int      @default(0)
+  faceMismatchCount Int      @default(0)
+  startedAt         DateTime @default(now())
+  endedAt           DateTime?
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CodingSubmission {
+  id            String   @id @default(cuid())
+  userId         String
+  language       String
+  sourceCode     String
+  passedTests    Int
+  totalTests     Int
+  leaderboardRank Int?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
