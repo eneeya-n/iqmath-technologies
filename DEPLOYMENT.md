@@ -37,6 +37,21 @@
 5. Deploy. Cloudflare gives you a `*.pages.dev` URL.
 6. Add custom domain under **Pages → Custom domains** (e.g. `www.iqmathtech.com`).
 
+### GitHub Actions deploy (recommended)
+
+Add these repository secrets in GitHub (**Settings → Secrets and variables → Actions**):
+
+- `CLOUDFLARE_API_TOKEN` — create in Cloudflare with **Account → Cloudflare Pages → Edit**
+- `CLOUDFLARE_ACCOUNT_ID` — from Cloudflare dashboard URL or **Workers & Pages → Overview**
+
+Push to `main` runs `.github/workflows/deploy-cloudflare-pages.yml` and deploys with:
+
+```bash
+wrangler pages deploy frontend/out --project-name=iqmath-technologies
+```
+
+This avoids the broken `npx wrangler deploy` Workers command.
+
 ### Manual deploy (optional)
 
 ```bash
