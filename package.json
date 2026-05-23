@@ -13,7 +13,8 @@
     "build": "npm run build --workspace frontend && npm run build --workspace backend",
     "build:frontend": "npm run build --workspace frontend",
     "pages:build": "npm run build --workspace frontend",
-    "pages:deploy": "wrangler pages deploy frontend/out --project-name=iqmath-technologies"
+    "pages:deploy": "wrangler pages deploy frontend/out --project-name=iqmath-technologies",
+    "deploy": "wrangler deploy"
   },
   "devDependencies": {
     "wrangler": "^4.94.0"

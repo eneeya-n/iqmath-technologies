@@ -26,8 +26,8 @@
 | **Production branch** | `main` |
 | **Framework preset** | `None` |
 | **Build command** | `npm ci --legacy-peer-deps && npm run build:frontend` |
-| **Build output directory** | `frontend/out` |
-| **Deploy command** | *(leave empty)* — or `npm run pages:deploy` if your plan requires one |
+| **Build output directory** | *(not used for Workers static assets — assets path is in `wrangler.toml`)* |
+| **Deploy command** | `npx wrangler deploy` *(default)* or `npm run deploy` |
 | **Node.js version** | `20` (uses root `.node-version`) |
 
 > **Important:** Do **not** use `npx wrangler deploy`. That deploys a Worker and fails in this monorepo. This site is a static Next.js export published from `frontend/out`.
