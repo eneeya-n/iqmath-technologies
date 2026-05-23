@@ -27,7 +27,10 @@
 | **Framework preset** | `None` |
 | **Build command** | `npm ci --legacy-peer-deps && npm run build:frontend` |
 | **Build output directory** | `frontend/out` |
+| **Deploy command** | *(leave empty)* — or `npm run pages:deploy` if your plan requires one |
 | **Node.js version** | `20` (uses root `.node-version`) |
+
+> **Important:** Do **not** use `npx wrangler deploy`. That deploys a Worker and fails in this monorepo. This site is a static Next.js export published from `frontend/out`.
 
 4. Optional environment variable (when backend is live):
    - `NEXT_PUBLIC_API_BASE_URL=https://<your-api-domain>/api`
@@ -38,7 +41,7 @@
 
 ```bash
 npm run build:frontend
-npx wrangler pages deploy frontend/out --project-name=iqmath-technologies
+npm run pages:deploy
 ```
 
 ## 2b) Deploy Frontend (Netlify) — alternative
