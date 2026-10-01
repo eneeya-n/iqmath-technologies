@@ -2,9 +2,22 @@ const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || "";
 
 export const COURSE_ID = "python-data-analytics";
 export const COURSE_NAME = "Python, SQL & Power BI — 2 Month Program";
-export const COURSE_FEE_PAISE = 500_000;
-export const COURSE_FEE_RUPEES = 5_000;
-export const COURSE_LIST_PRICE_RUPEES = 8_000;
+export const COURSE_FEE_PAISE = 800_000;
+export const COURSE_FEE_RUPEES = 8_000;
+export const COUPON_CODE = "IQDAB26";
+export const COUPON_FEE_PAISE = 500_000;
+export const COUPON_FEE_RUPEES = 5_000;
+
+export function normalizeCoupon(input: string) {
+  return input.trim().toUpperCase().replace(/\s+/g, "");
+}
+
+export function quotedFee(coupon: string) {
+  if (normalizeCoupon(coupon) === COUPON_CODE) {
+    return { rupees: COUPON_FEE_RUPEES, paise: COUPON_FEE_PAISE, applied: true as const };
+  }
+  return { rupees: COURSE_FEE_RUPEES, paise: COURSE_FEE_PAISE, applied: false as const };
+}
 
 export const YEARS_OF_STUDY = [
   "1st year",
@@ -119,11 +132,12 @@ export function validateForm(form: EnrollForm): Partial<Record<keyof EnrollForm,
   return errors;
 }
 
-export function registrationPayload(form: EnrollForm, registrationId?: string) {
+export function registrationPayload(form: EnrollForm, registrationId?: string, coupon?: string) {
   const shared = {
     name: form.name.trim().replace(/\s+/g, " "),
     email: form.email.trim(),
     mobile: normalizeMobile(form.mobile),
+    coupon: normalizeCoupon(coupon || ""),
     ...(registrationId ? { registrationId } : {})
   };
 
@@ -212,8 +226,8 @@ async function postAppsScript<T>(action: "checkout" | "verify", body: object): P
   return data as T;
 }
 
-export function createCheckout(form: EnrollForm, registrationId?: string) {
-  return postAppsScript<CheckoutResponse>("checkout", registrationPayload(form, registrationId));
+export function createCheckout(form: EnrollForm, registrationId?: string, coupon?: string) {
+  return postAppsScript<CheckoutResponse>("checkout", registrationPayload(form, registrationId, coupon));
 }
 
 export function verifyPayment(body: {

@@ -3,9 +3,7 @@
 import { FormEvent, useEffect, useId, useState } from "react";
 import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_PHONE_HREF, WHATSAPP_HREF } from "@/lib/contact";
 import {
-  COURSE_FEE_PAISE,
   COURSE_FEE_RUPEES,
-  COURSE_LIST_PRICE_RUPEES,
   COURSE_NAME,
   EMPTY_FORM,
   EXPERIENCE_LEVELS,
@@ -18,6 +16,7 @@ import {
   createCheckout,
   inr,
   normalizeMobile,
+  quotedFee,
   validateForm,
   verifyPayment
 } from "@/lib/enroll";
@@ -70,6 +69,9 @@ export function RegisterExperience() {
   const [registrationId, setRegistrationId] = useState("");
   const [receipt, setReceipt] = useState<VerifiedRegistration | null>(null);
   const [dialog, setDialog] = useState<PaymentDialog | null>(null);
+  const [coupon, setCoupon] = useState("");
+  const quote = quotedFee(coupon);
+  const couponInvalid = coupon.trim().length > 0 && !quote.applied;
 
   useEffect(() => {
     if (!dialog) return;
@@ -123,10 +125,10 @@ export function RegisterExperience() {
     });
 
     try {
-      const checkout = await createCheckout(form, registrationId || undefined);
+      const checkout = await createCheckout(form, registrationId || undefined, coupon);
       setRegistrationId(checkout.registrationId);
 
-      if (checkout.amount !== COURSE_FEE_PAISE || checkout.currency !== "INR" || !checkout.keyId || !checkout.orderId) {
+      if (checkout.amount !== quote.paise || checkout.currency !== "INR" || !checkout.keyId || !checkout.orderId) {
         throw new EnrollRequestError("We could not start the payment. Please try again.");
       }
 
@@ -281,12 +283,8 @@ export function RegisterExperience() {
 
           <aside className="rounded-[28px] border border-[#e3dbcf] bg-white p-7 shadow-[0_20px_50px_rgba(23,32,51,0.05)]">
             <p className="text-[0.7rem] uppercase tracking-[0.18em] text-[#6a6258]">Fee for this cohort</p>
-            <p className="mt-5 text-lg text-[#8d857b] line-through decoration-[#b9a48a]">{inr(COURSE_LIST_PRICE_RUPEES)}</p>
-            <p className="mt-1 text-5xl leading-none text-[#172033] [font-family:var(--font-enroll-display),Georgia,serif]">
+            <p className="mt-5 text-5xl leading-none text-[#172033] [font-family:var(--font-enroll-display),Georgia,serif]">
               {inr(COURSE_FEE_RUPEES)}
-            </p>
-            <p className="mt-4 text-sm leading-relaxed text-[#2f6b28]">
-              ₹3,000 off the full program fee. This is the amount charged at payment.
             </p>
             <ul className="mt-6 space-y-2 border-t border-[#efe8dc] pt-5 text-sm leading-relaxed text-[#3e4854]">
               <li>All seven modules in one registration</li>
@@ -484,10 +482,34 @@ export function RegisterExperience() {
                       </>
                     )}
                     <ReviewRow label="Program" value={COURSE_NAME} />
-                    <ReviewRow label="Amount due" value={inr(COURSE_FEE_RUPEES)} />
+                    <ReviewRow label="Program fee" value={inr(COURSE_FEE_RUPEES)} />
+                    <ReviewRow label="Amount due" value={inr(quote.rupees)} />
                   </dl>
+                  <label className="mt-6 block" htmlFor="coupon-field">
+                    <span className="text-sm font-medium text-[#172033]">Coupon</span>
+                    <input
+                      id="coupon-field"
+                      name="coupon"
+                      value={coupon}
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      placeholder="Coupon code"
+                      aria-invalid={couponInvalid}
+                      aria-describedby={quote.applied || couponInvalid ? "coupon-help" : undefined}
+                      onChange={(event) => setCoupon(event.target.value.toUpperCase())}
+                      className="mt-2 h-12 w-full rounded-2xl border border-[#e3dbcf] bg-white px-4 text-base tracking-[0.08em] text-[#172033] outline-none ring-[#1657A8] placeholder:tracking-normal placeholder:text-[#b0a898] focus:ring-2"
+                    />
+                    {quote.applied || couponInvalid ? (
+                      <span id="coupon-help" className={`mt-2 block text-sm ${quote.applied ? "text-[#2f6b28]" : "text-[#9b2c2c]"}`}>
+                        {quote.applied
+                          ? `Coupon applied. You pay ${inr(quote.rupees)}.`
+                          : "That coupon is not valid."}
+                      </span>
+                    ) : null}
+                  </label>
                   <p className="mt-6 text-sm leading-relaxed text-[#4d5864]">
-                    Razorpay opens next. The charge is {inr(COURSE_FEE_RUPEES)}. Your place is confirmed only after that payment is verified.
+                    Razorpay opens next. The charge is {inr(quote.rupees)}. Your place is confirmed only after that payment is verified.
                   </p>
                   <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                     <button
@@ -502,7 +524,7 @@ export function RegisterExperience() {
                           : dialog.title.startsWith("Complete")
                             ? "Waiting for payment…"
                             : "Opening secure payment…"
-                        : `Pay ${inr(COURSE_FEE_RUPEES)}`}
+                        : `Pay ${inr(quote.rupees)}`}
                     </button>
                     <button
                       type="button"
@@ -545,8 +567,7 @@ export function RegisterExperience() {
               <p className="mt-4 text-xl leading-snug text-[#172033] [font-family:var(--font-enroll-display),Georgia,serif]">
                 {COURSE_NAME}
               </p>
-              <p className="mt-4 text-sm text-[#8d857b] line-through">{inr(COURSE_LIST_PRICE_RUPEES)}</p>
-              <p className="text-3xl text-[#172033]">{inr(COURSE_FEE_RUPEES)}</p>
+              <p className="mt-4 text-3xl text-[#172033]">{inr(COURSE_FEE_RUPEES)}</p>
               <p className="mt-4 text-sm leading-relaxed text-[#4d5864]">
                 Online, Monday to Friday, one hour a day, for two months. 45 hours in total.
               </p>

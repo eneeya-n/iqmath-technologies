@@ -15,7 +15,7 @@ const sans = Outfit({
 export const metadata: Metadata = {
   title: "Register · Python, SQL & Power BI | IQMath Technologies",
   description:
-    "Register for IQMath Technologies' 2-month Python, SQL and Power BI program. Monday to Friday, 1 hour a day, 45 hours. Fee ₹5,000."
+    "Register for IQMath Technologies' 2-month Python, SQL and Power BI program. Monday to Friday, 1 hour a day, 45 hours. Fee ₹8,000."
 };
 
 export default function PythonDataAnalyticsRegistrationPage() {

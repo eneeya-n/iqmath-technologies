@@ -25,8 +25,11 @@
 var SPREADSHEET_ID = "1Emnzs9rFU-pk6t0OmOyQ5IHAxD8pFFo-No6ODMSXHzo";
 var COURSE_ID = "python-data-analytics";
 var COURSE_NAME = "Python, SQL & Power BI — 2 Month Program";
-var FEE_PAISE = 500000;
-var FEE_RUPEES = "5000";
+var FULL_PAISE = 800000;
+var FULL_RUPEES = "8000";
+var COUPON_CODE = "IQDAB26";
+var COUPON_PAISE = 500000;
+var COUPON_RUPEES = "5000";
 var SHEET_NAME = "Registrations";
 var YEARS = ["1st year", "2nd year", "3rd year", "4th year", "5th year", "Postgraduate"];
 var EXPERIENCE = ["Fresher", "Less than 1 year", "1-3 years", "3-5 years", "5-10 years", "10+ years"];
@@ -89,7 +92,7 @@ function reconcilePendingPayments() {
       if (row.status !== "Pending" || !row.razorpayOrderId) continue;
       checked++;
       var payments = razorpay("/orders/" + encodeURIComponent(row.razorpayOrderId) + "/payments");
-      var captured = findCaptured(payments.items || [], row.registrationId, row.razorpayOrderId);
+      var captured = findCaptured(payments.items || [], paiseForRow(row), row.razorpayOrderId);
       if (captured) {
         writeRecord(sheet, paidRecord(row, row.razorpayOrderId, captured.id));
       }
@@ -145,7 +148,7 @@ function handleCheckout(body) {
   var order;
   try {
     order = razorpay("/orders", "post", {
-      amount: FEE_PAISE,
+      amount: paiseForRow(saved.record),
       currency: "INR",
       receipt: saved.record.registrationId,
       notes: { registrationId: saved.record.registrationId, courseId: COURSE_ID }
@@ -164,7 +167,7 @@ function handleCheckout(body) {
     return { ok: false, message: "We could not start the payment. Please try again.", code: "RAZORPAY_ERROR" };
   }
 
-  if (!order.id || Number(order.amount) !== FEE_PAISE || order.currency !== "INR") {
+  if (!order.id || Number(order.amount) !== paiseForRow(saved.record) || order.currency !== "INR") {
     return { ok: false, message: "We could not start the payment. Please try again.", code: "ORDER_INVALID" };
   }
 
@@ -211,7 +214,7 @@ function handleVerify(body) {
 
   var payment;
   try {
-    payment = confirmPayment(paymentId, orderId, registrationId);
+    payment = confirmPayment(paymentId, orderId, registrationId, paiseForRow(row));
   } catch (error) {
     if (error && error.code === "PAYMENT_PENDING_CONFIRMATION") {
       withLock(function () {
@@ -254,35 +257,47 @@ function handleVerify(body) {
   return receipt(paid);
 }
 
-function confirmPayment(paymentId, orderId, registrationId) {
+function confirmPayment(paymentId, orderId, registrationId, expectedPaise) {
   var order = razorpay("/orders/" + encodeURIComponent(orderId));
-  if (Number(order.amount) !== FEE_PAISE || order.currency !== "INR" || noteValue(order.notes, "registrationId") !== registrationId) {
+  if (Number(order.amount) !== expectedPaise || order.currency !== "INR" || noteValue(order.notes, "registrationId") !== registrationId) {
     throw { code: "AMOUNT_MISMATCH" };
   }
   var payment = razorpay("/payments/" + encodeURIComponent(paymentId));
-  if (payment.order_id !== orderId || Number(payment.amount) !== FEE_PAISE || payment.currency !== "INR") {
+  if (payment.order_id !== orderId || Number(payment.amount) !== expectedPaise || payment.currency !== "INR") {
     throw { code: "PAYMENT_MISMATCH" };
   }
   if (payment.status === "authorized") {
     payment = razorpay("/payments/" + encodeURIComponent(paymentId) + "/capture", "post", {
-      amount: FEE_PAISE,
+      amount: expectedPaise,
       currency: "INR"
     });
   }
-  if (payment.status !== "captured" || Number(payment.amount) !== FEE_PAISE) {
+  if (payment.status !== "captured" || Number(payment.amount) !== expectedPaise) {
     throw { code: "PAYMENT_PENDING_CONFIRMATION" };
   }
   return payment;
 }
 
-function findCaptured(items, registrationId, orderId) {
+function findCaptured(items, expectedPaise, orderId) {
   for (var i = 0; i < items.length; i++) {
     var payment = items[i];
-    if (payment.status === "captured" && Number(payment.amount) === FEE_PAISE && payment.currency === "INR" && payment.order_id === orderId) {
+    if (payment.status === "captured" && Number(payment.amount) === expectedPaise && payment.currency === "INR" && payment.order_id === orderId) {
       return payment;
     }
   }
   return null;
+}
+
+function priceForCoupon(coupon) {
+  var code = String(coupon || "").replace(/\s+/g, "").toUpperCase();
+  if (code === COUPON_CODE) return { paise: COUPON_PAISE, rupees: COUPON_RUPEES, coupon: COUPON_CODE };
+  return { paise: FULL_PAISE, rupees: FULL_RUPEES, coupon: "" };
+}
+
+function paiseForRow(row) {
+  var rupees = Number(row && row.amountInRupees);
+  if (rupees === 5000) return COUPON_PAISE;
+  return FULL_PAISE;
 }
 
 function validateRegistration(body) {
@@ -300,7 +315,8 @@ function validateRegistration(body) {
     email: email,
     mobile: mobile,
     audience: audience,
-    registrationId: body.registrationId ? String(body.registrationId) : ""
+    registrationId: body.registrationId ? String(body.registrationId) : "",
+    price: priceForCoupon(body.coupon)
   };
 
   if (audience === "college") {
@@ -348,12 +364,12 @@ function blankRecord(rowNumber, registrationId, input, timestamp) {
     experience: input.audience === "company" ? input.experience : "",
     courseId: COURSE_ID,
     courseName: COURSE_NAME,
-    amountInRupees: FEE_RUPEES,
+    amountInRupees: input.price.rupees,
     status: "Pending",
     razorpayOrderId: "",
     razorpayPaymentId: "",
     paidAt: "",
-    notes: ""
+    notes: input.price.coupon ? "Coupon " + input.price.coupon : ""
   };
 }
 
@@ -362,7 +378,6 @@ function paidRecord(row, orderId, paymentId) {
   row.razorpayOrderId = orderId;
   row.razorpayPaymentId = paymentId;
   row.paidAt = new Date().toISOString();
-  row.amountInRupees = FEE_RUPEES;
   return row;
 }
 
@@ -375,7 +390,7 @@ function receipt(row) {
     email: row.email,
     mobile: row.mobile,
     courseName: row.courseName,
-    amountInRupees: 5000
+    amountInRupees: Number(row.amountInRupees) || 8000
   };
 }
 
