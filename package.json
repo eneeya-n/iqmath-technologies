@@ -3,14 +3,12 @@
   "private": true,
   "version": "1.0.0",
   "workspaces": [
-    "frontend",
-    "backend"
+    "frontend"
   ],
   "scripts": {
     "dev": "npm run dev --workspace frontend",
     "dev:frontend": "npm run dev --workspace frontend",
-    "dev:backend": "npm run dev --workspace backend",
-    "build": "npm run build --workspace frontend && npm run build --workspace backend",
+    "build": "npm run build --workspace frontend",
     "build:frontend": "npm run build --workspace frontend",
     "pages:build": "npm run build --workspace frontend",
     "pages:deploy": "wrangler pages deploy frontend/out --project-name=iqmath-technologies",

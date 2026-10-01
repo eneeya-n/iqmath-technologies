@@ -21,6 +21,17 @@ body {
   color: hsl(var(--foreground));
 }
 
+html.enroll-light,
+html.enroll-light body {
+  background: #f4f0e8;
+  color: #1b2430;
+}
+
+html.enroll-light ::selection {
+  background: #d5e4f7;
+  color: #1b2430;
+}
+
 @keyframes scroll {
   0% {
     transform: translateX(0%);

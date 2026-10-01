@@ -29,7 +29,14 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build frontend
-        run: npm run build:frontend
+        env:
+          NEXT_PUBLIC_APPS_SCRIPT_URL: ${{ secrets.NEXT_PUBLIC_APPS_SCRIPT_URL }}
+        run: |
+          if [ -z "$NEXT_PUBLIC_APPS_SCRIPT_URL" ]; then
+            echo "Add the NEXT_PUBLIC_APPS_SCRIPT_URL repository secret before deploying."
+            exit 1
+          fi
+          npm run build:frontend
 
       - name: Deploy to Cloudflare Pages
         env:

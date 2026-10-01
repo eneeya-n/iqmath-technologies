@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import "katex/dist/katex.min.css";
-import { Navbar } from "@/components/layout/navbar";
-import { ScrollProgress } from "@/components/layout/scroll-progress";
+import { SiteFrame } from "@/components/layout/site-frame";
 
 export const metadata: Metadata = {
   title: "IQMath Technologies | Web, App, EdTech & Training",
@@ -16,11 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <ScrollProgress />
-        <Navbar />
-        {children}
+        <Script id="enroll-theme" strategy="beforeInteractive">
+          {`if(location.pathname.indexOf("/register")===0){document.documentElement.classList.add("enroll-light")}`}
+        </Script>
+        <SiteFrame>{children}</SiteFrame>
       </body>
     </html>
   );

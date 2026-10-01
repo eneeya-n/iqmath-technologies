@@ -1,19 +1,13 @@
-# Deployment Guide (GoDaddy + Netlify + Render)
+# Deployment Guide (GoDaddy + Cloudflare Pages + Apps Script)
 
-## 1) Deploy Backend (Render)
+## 1) Deploy registration (Google Apps Script)
 
-1. Create a new **Web Service** in Render and connect this project.
-2. Use `render.yaml` (Blueprint) or configure manually:
-   - Root directory: `backend`
-   - Build command: `npm install && npm run build`
-   - Start command: `npm run start`
-   - Health check: `/health`
-3. Set environment variables in Render:
-   - `DATABASE_URL`
-   - `JWT_SECRET`
-   - `GOOGLE_CLIENT_ID`
-   - `PORT=5000`
-4. Deploy and copy backend URL, e.g. `https://iqmath-backend.onrender.com`.
+1. Open the registration spreadsheet and go to **Extensions → Apps Script**.
+2. Paste `apps-script/Registration.gs` in as `Code.gs`.
+3. Add script properties `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`.
+4. **Deploy → New deployment → Web app**. Execute as yourself. Access: **Anyone**.
+5. Run `installReconcileTrigger` once from the editor and approve the permissions.
+6. Copy the web app `/exec` URL. The site uses it as `NEXT_PUBLIC_APPS_SCRIPT_URL`.
 
 ## 2) Deploy Frontend (Cloudflare Pages)
 
@@ -32,8 +26,8 @@
 
 > **Important:** Do **not** use `npx wrangler deploy`. That deploys a Worker and fails in this monorepo. This site is a static Next.js export published from `frontend/out`.
 
-4. Optional environment variable (when backend is live):
-   - `NEXT_PUBLIC_API_BASE_URL=https://<your-api-domain>/api`
+4. Environment variable, set before the frontend build:
+   - `NEXT_PUBLIC_APPS_SCRIPT_URL=https://script.google.com/macros/s/<deployment-id>/exec`
 5. Deploy. Cloudflare gives you a `*.pages.dev` URL.
 6. Add custom domain under **Pages → Custom domains** (e.g. `www.iqmathtech.com`).
 
@@ -65,8 +59,8 @@ npm run pages:deploy
 2. Netlify will use `netlify.toml`:
    - Base: `frontend`
    - Build: `npm run build`
-3. Set Netlify environment variable:
-   - `NEXT_PUBLIC_API_BASE_URL=https://<your-backend-domain>/api`
+3. Set the Netlify environment variable before building:
+   - `NEXT_PUBLIC_APPS_SCRIPT_URL=https://script.google.com/macros/s/<deployment-id>/exec`
 4. Deploy site and copy frontend URL, e.g. `https://iqmath-tech.netlify.app`.
 
 ## 3) Connect GoDaddy Domain
@@ -76,16 +70,8 @@ Use domain example: `iqmathtech.com`
 - Frontend:
   - `www.iqmathtech.com` -> CNAME -> `<your-project>.pages.dev` (Cloudflare Pages)
   - `iqmathtech.com` -> Cloudflare apex DNS (follow Pages custom domain wizard)
-- Backend:
-  - `api.iqmathtech.com` -> CNAME -> `<render-service>.onrender.com`
-
-After DNS propagation, update:
-
-- Netlify env: `NEXT_PUBLIC_API_BASE_URL=https://api.iqmathtech.com/api`
-- Cloudflare Pages env: `NEXT_PUBLIC_API_BASE_URL=https://api.iqmathtech.com/api`
-
 ## 4) Post-Deploy Checks
 
-1. `https://www.<domain>` loads landing page.
-2. API `https://api.<domain>/health` returns `{ "ok": true, ... }`.
-3. Login and dashboard APIs work from frontend.
+1. `https://www.<domain>` loads the landing page.
+2. `/register/python-data-analytics` opens the registration page.
+3. A test payment writes a row on the Registrations tab and only then shows as paid.
